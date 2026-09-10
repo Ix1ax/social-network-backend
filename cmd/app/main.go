@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ix1ax/social-network-backend/internal/common/config"
+	"github.com/ix1ax/social-network-backend/internal/common/db"
 	"github.com/joho/godotenv"
 )
 
@@ -18,7 +19,19 @@ func main() {
 
 	cfg := config.Load()
 
+	database, err := db.NewConnection(cfg)
+
+	if err  != nil {
+		log.Fatal("Error connecting to database: ", err)
+	}
+
+	/*
+	 * defer откладывает выполнение функции до момента выхода из текущей
+	 * т.е как только функция main() завершится, закроется и подключение к БД
+	 */
+	defer database.Close()
+
+	fmt.Println("Successfully connected to database!")
 	fmt.Printf("Server will start on port: %s\n", cfg.ServerPort)
-	fmt.Printf("DB Host: %s\n", cfg.DbHost)
 
 }
