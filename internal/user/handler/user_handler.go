@@ -1,0 +1,50 @@
+package handler
+
+import (
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ix1ax/social-network-backend/internal/user/dto"
+	"github.com/ix1ax/social-network-backend/internal/user/service"
+)
+
+type UserHandler struct {
+	userService service.UserService
+}
+
+func NewUserHandler(userSevice service.UserService) *UserHandler {
+	return &UserHandler{userService: userSevice}
+}
+
+func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup) {
+	auth := rg.Group("/auth")
+	{
+		auth.POST("/register", h.Register)
+	}
+}
+
+func (h *UserHandler) Register(c *gin.Context) {
+	var req dto.RegisterRequest
+
+	err := c.ShouldBindJSON(&req)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.userService.Register(c.Request.Context(), &req)
+
+	if err != nil {
+		if errors.Is(err, service.ErrUserAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, res)
+
+}
