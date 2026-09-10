@@ -11,10 +11,17 @@ import (
 
 func NewConnection(cfg *config.Config) (*sqlx.DB, error) {
 
-	// Создаем строку с нужным форматированием
+	/*
+	 * Создаем строку с нужным форматированием
+	 * search_path - это в какой схеме искать
+	 */ 
 	dsn := fmt.Sprintf(
-		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-		cfg.DbHost, cfg.DbPort, cfg.DbName, cfg.DbUser, cfg.DbPassword,
+		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable search_path=social_network",
+		cfg.DbHost,
+	 	cfg.DbPort, 
+		cfg.DbName,
+	 	cfg.DbUser,
+		cfg.DbPassword,
 	)
 
 	// Подключаем с драйвером pgx и строкой раньше сформированной
