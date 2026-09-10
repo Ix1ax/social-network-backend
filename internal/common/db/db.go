@@ -1,0 +1,29 @@
+package db
+
+import (
+	"fmt"
+
+	// Ничего не используем из пакета, вызываем ради эффекта init
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/ix1ax/social-network-backend/internal/common/config"
+	"github.com/jmoiron/sqlx"
+)
+
+func NewConnection(cfg *config.Config) (*sqlx.DB, error) {
+
+	// Создаем строку с нужным форматированием
+	dsn := fmt.Sprintf(
+		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
+		cfg.DbHost, cfg.DbPort, cfg.DbName, cfg.DbUser, cfg.DbPassword,
+	)
+
+	// Подключаем с драйвером pgx и строкой раньше сформированной
+	db, err := sqlx.Connect("pgx", dsn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+
+}
