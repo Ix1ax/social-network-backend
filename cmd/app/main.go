@@ -25,6 +25,11 @@ func main() {
 		log.Fatal("Error connecting to database: ", err)
 	}
 
+	if err := db.RunMigrations(cfg); err != nil {
+		log.Fatal("Error running migrations: ", err) 
+	}
+
+	
 	/*
 	 * defer откладывает выполнение функции до момента выхода из текущей
 	 * т.е как только функция main() завершится, закроется и подключение к БД
@@ -32,6 +37,7 @@ func main() {
 	defer database.Close()
 
 	fmt.Println("Successfully connected to database!")
+	fmt.Println("Successfully applied migrations!")
 	fmt.Printf("Server will start on port: %s\n", cfg.ServerPort)
 
 }

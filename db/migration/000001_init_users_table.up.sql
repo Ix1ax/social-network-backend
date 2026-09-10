@@ -1,4 +1,6 @@
-create table users (
+create schema social_network;
+
+create table social_network.users (
 
     id              UUID            primary key     default gen_random_uuid(),
     name            varchar(128)    not null,
