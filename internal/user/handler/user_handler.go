@@ -21,6 +21,7 @@ func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	{
 		auth.POST("/register", h.Register)
+		auth.POST("/login", h.Login)
 	}
 }
 
@@ -46,5 +47,30 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, res)
+
+}
+
+func (h *UserHandler) Login(c *gin.Context) {
+	var req dto.LoginRequest
+
+	err := c.ShouldBindJSON(&req)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	res, err := h.userService.Login(c.Request.Context(), &req)
+
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 
 }

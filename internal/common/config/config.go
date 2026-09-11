@@ -9,6 +9,7 @@ type Config struct {
 	DbName     string
 	DbUser     string
 	DbPassword string
+	JwtSecret  string
 }
 
 func Load() *Config {
@@ -21,6 +22,7 @@ func Load() *Config {
 		DbName:     os.Getenv("POSTGRES_DB"),
 		DbUser:     os.Getenv("POSTGRES_USER"),
 		DbPassword: os.Getenv("POSTGRES_PASSWORD"),
+		JwtSecret:  os.Getenv("JWT_SECRET"),
 	}
 
 }
