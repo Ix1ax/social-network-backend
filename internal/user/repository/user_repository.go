@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/ix1ax/social-network-backend/internal/user/entity"
 	"github.com/jmoiron/sqlx"
 )
@@ -10,6 +11,7 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -56,6 +58,25 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.
 	var user entity.User
 
 	err := r.db.GetContext(ctx, &user, query, email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
+
+	query :=
+		`
+		SELECT id, name, surname, email, password_hash, created_at, updated_at
+		FROM users WHERE id = $1
+		`
+
+	var user entity.User
+
+	err := r.db.GetContext(ctx, &user, query, id)
 
 	if err != nil {
 		return nil, err

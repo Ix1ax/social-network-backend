@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ix1ax/social-network-backend/internal/common/config"
 	"github.com/ix1ax/social-network-backend/internal/common/db"
+	"github.com/ix1ax/social-network-backend/internal/common/middleware"
 	"github.com/ix1ax/social-network-backend/internal/common/token"
 	"github.com/ix1ax/social-network-backend/internal/user/handler"
 	"github.com/ix1ax/social-network-backend/internal/user/repository"
@@ -44,11 +45,12 @@ func New() (*App, error) {
 	userRepo := repository.NewUserRepository(database)
 	userService := service.NewUserService(userRepo, tokenManager)
 	userHandler := handler.NewUserHandler(userService)
+	authMiddleware := middleware.AuthMiddleware(tokenManager)
 
 	router := gin.Default()
 
 	v1 := router.Group("/api/v1")
-	userHandler.RegisterRoutes(v1)
+	userHandler.RegisterRoutes(v1, authMiddleware)
 
 	return &App{
 		cfg:    cfg,

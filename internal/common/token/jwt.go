@@ -1,14 +1,20 @@
 package token
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
+var (
+	ErrInvalidToken = errors.New("invalid or expired token")
+)
+
 type TokenManager interface {
 	GenerateToken(userID uuid.UUID) (string, error)
+	ParseToken(token string) (uuid.UUID, error)
 }
 
 type jwtManager struct {
@@ -38,4 +44,20 @@ func (m *jwtManager) GenerateToken(userID uuid.UUID) (string, error) {
 	}
 
 	return jwtToken, nil
+}
+
+func (m *jwtManager) ParseToken(tokenString string) (uuid.UUID, error) {
+
+	var claims jwt.RegisteredClaims
+
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (any, error) {
+		return m.secretKey, nil
+	})
+
+	if err != nil || token == nil || !token.Valid {
+		return uuid.Nil, ErrInvalidToken
+	}
+
+	return uuid.Parse(claims.Subject)
+
 }
