@@ -2,10 +2,12 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ix1ax/social-network-backend/internal/common/config"
 	"github.com/ix1ax/social-network-backend/internal/common/db"
+	"github.com/ix1ax/social-network-backend/internal/common/token"
 	"github.com/ix1ax/social-network-backend/internal/user/handler"
 	"github.com/ix1ax/social-network-backend/internal/user/repository"
 	"github.com/ix1ax/social-network-backend/internal/user/service"
@@ -38,8 +40,9 @@ func New() (*App, error) {
 		return nil, fmt.Errorf("error running migrations: %w", err)
 	}
 
+	tokenManager := token.NewJwtManager(cfg.JwtSecret, 24*time.Hour)
 	userRepo := repository.NewUserRepository(database)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, tokenManager)
 	userHandler := handler.NewUserHandler(userService)
 
 	router := gin.Default()

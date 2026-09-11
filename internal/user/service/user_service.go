@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ix1ax/social-network-backend/internal/common/token"
 	"github.com/ix1ax/social-network-backend/internal/user/dto"
 	"github.com/ix1ax/social-network-backend/internal/user/entity"
 	"github.com/ix1ax/social-network-backend/internal/user/repository"
@@ -12,19 +13,25 @@ import (
 )
 
 var (
-	ErrUserAlreadyExists = errors.New("user with this email already exists")
+	ErrUserAlreadyExists  = errors.New("user with this email already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
 type UserService interface {
 	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
+	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
 }
 
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo     repository.UserRepository
+	tokenManager token.TokenManager
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repository.UserRepository, tokenManager token.TokenManager) UserService {
+	return &userService{
+		userRepo:     userRepo,
+		tokenManager: tokenManager,
+	}
 }
 
 func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error) {
@@ -54,13 +61,30 @@ func (s *userService) Register(ctx context.Context, req *dto.RegisterRequest) (*
 		return nil, fmt.Errorf("failed to created user %w", err)
 	}
 
-	return &dto.UserResponse{
-		ID:        newUser.ID,
-		Name:      newUser.Name,
-		Surname:   newUser.Surname,
-		Email:     newUser.Email,
-		CreatedAt: newUser.CreatedAt,
-		UpdatedAt: newUser.UpdatedAt,
-	}, nil
+	return dto.ToUserResponse(&newUser), nil
+
+}
+
+func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error) {
+
+	user, err := s.userRepo.GetByEmail(ctx, req.Email)
+
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	jwtToken, err := s.tokenManager.GenerateToken(user.ID)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return dto.ToAuthResponse(jwtToken, user), nil
 
 }
