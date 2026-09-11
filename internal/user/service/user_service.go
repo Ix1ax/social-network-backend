@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ix1ax/social-network-backend/internal/common/token"
 	"github.com/ix1ax/social-network-backend/internal/user/dto"
 	"github.com/ix1ax/social-network-backend/internal/user/entity"
@@ -15,11 +16,13 @@ import (
 var (
 	ErrUserAlreadyExists  = errors.New("user with this email already exists")
 	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrUserNotFound       = errors.New("user not founded")
 )
 
 type UserService interface {
 	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*dto.UserResponse, error)
 }
 
 type userService struct {
@@ -87,4 +90,15 @@ func (s *userService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Au
 
 	return dto.ToAuthResponse(jwtToken, user), nil
 
+}
+
+func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*dto.UserResponse, error) {
+
+	user, err := s.userRepo.GetByID(ctx, id)
+
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+
+	return dto.ToUserResponse(user), nil
 }
